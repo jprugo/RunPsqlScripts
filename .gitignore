@@ -1,0 +1,4 @@
+dist/*
+__pycache__
+RunPsqlScripts.egg-info/*
+MANIFEST

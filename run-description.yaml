@@ -1,0 +1,29 @@
+directories:
+    ScriptsTables:
+        schema: ods #util
+        childs:
+            # Hosted directories where the script is executed
+            - Install
+            - Uninstall
+    ScriptsInserts:
+        schema: ods #util
+        childs:
+            # Hosted directories where the script is executed
+            - Install
+            - Uninstall
+run:
+    2022-01-11 09:39:
+        sprint: '21'
+        lote: '10'
+        creador: Laura
+        # folders
+        ScriptsTables:
+            Install:
+                - install.sql
+            Uninstall:
+                - uninstall.sql
+        ScriptsInserts:
+            Install:
+                - insert.sql
+            Uninstall:
+                - uninstall.sql
