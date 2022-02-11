@@ -32,11 +32,11 @@ run:
         lote: '11'
         creador: Laura
         # folders
-        ScriptsTables:
-            Install:
-                - install.sql
-            Uninstall:
-                - uninstall.sql
+        # ScriptsTables:
+        #     Install:
+        #         - install.sql
+        #     Uninstall:
+        #         - uninstall.sql
         ScriptsInserts:
             Install:
                 - insert.sql

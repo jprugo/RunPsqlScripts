@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name='RunPsqlScripts',
-    version='0.2.6',
+    version='0.2.8',
     description='Library for python 3 that allows to execute queries for PostgreSQL according to the load definition',
     author='Juan Rueda',
     author_email='Juan.Rueda@btgpactual.com',
@@ -10,8 +10,9 @@ setup(
     license='MIT',
     install_requires=[
         'psycopg2-binary',
-        'pytest',
-        'python-dotenv'
+        'python-dotenv',
+        'pyaml',
+        'jsonschema'
     ],
     keywords=['postgresql']
 )

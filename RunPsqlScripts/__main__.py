@@ -158,6 +158,7 @@ def init(
                         )
                     )
                 except KeyError as e:
+                    scripts= []
                     logger.error(
                         f"""The key {str(e)} has not been defined inside '{execution[0]}' at the level of 'run'""")
 

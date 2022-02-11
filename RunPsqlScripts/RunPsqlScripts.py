@@ -27,11 +27,13 @@ def execute_query(
 
 def change_schema(connection, schema: str):
     try:
+        logger.info(f'Changing schema to: {schema}')
         connection.cursor().execute(
             sql.SQL("SET search_path TO {schema};").format(
                 schema=sql.Identifier(schema)
             )
         )
+        logger.info(f'Schema changed succesfully')
     except psycopg2.Error as e:
         logger.error('An exception ocurred changing schema: ' + str(e))
         raise e
