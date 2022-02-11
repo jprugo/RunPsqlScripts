@@ -52,6 +52,7 @@ def main():
         # Mandatorio y transversal a parametros y tablas
         if opt in ['--secret']:
             secret = arg
+            print('hola: ' + arg)
             try:
                 secret = {
                     'host': re.search(r"""(["']?host["']?:)([^[,}\]]+)""", secret).group(2).strip(),
@@ -69,7 +70,7 @@ def main():
             filters.append(arg)
         elif opt in ['--use-dotenv']:
             use_dotenv = True
-            logger.info('getting .env info')
+            logger.info('Getting .env info')
             load_dotenv()
             params = os.environ
         # Short flags
@@ -78,8 +79,8 @@ def main():
             execute_last = True
         else:
             key = opt.replace('-', '')
-            if not use_dotenv and key in params:
-                logger.info(f'Sobrescribiendo propiedad: "{key}"')
+            if key in params:
+                logger.info(f"Overwriting property: '{key}'")
             params[key] = arg
 
     # Si no se especifica secreto de conexion se interrumpe la ejecucion
@@ -96,7 +97,7 @@ def main():
     if execute_last == False:
         if len(filters) == 0:
             raise AttributeError(
-                'Se debe especificar un filtro de la siguiente forma --filter "name=value" ')
+                'Filters are specified as follows --filter "name=value"')
 
     try:
         CONNECTION = psycopg2.connect(**secret)
@@ -134,7 +135,7 @@ def init(
     run = run_description_data['run']
 
     if(execute_last):
-        executions = [list(run.keys())[-1]]
+        executions = [list(run.items())[-1]]
     else:
         executions = list(
             filter(
@@ -147,6 +148,7 @@ def init(
         for directories_key, directories_values in directories.items():
             folders = directories_values["childs"]
             for folder in folders:
+                print(f'Searching in folder {folder}')
                 try:
                     scripts = list(
                         map(
@@ -157,8 +159,7 @@ def init(
                     )
                 except KeyError as e:
                     logger.error(
-                        f'''No se ha definido la llave: '{str(e)}'\ dentro de "run" ''')
-                    sys.exit()
+                        f"""The key {str(e)} has not been defined inside '{execution[0]}' at the level of 'run'""")
 
                 start_execution(
                     connection=connection,
@@ -167,7 +168,8 @@ def init(
                     params=params,
                 )
 
-                logger.info('_________________________________________________')
+                logger.info(
+                    '_________________________________________________')
 
 
 def validate_filters(
@@ -179,8 +181,9 @@ def validate_filters(
         regex = re.search(r"([A-Za-z0-9]+)=([A-Za-z0-9]+)", filter)
         try:
             prop_name = regex.group(1).strip()
-        except AttributeError: 
-            logger.error('Los filtros deben especificarse de la siguiente forma: "property=value"')
+        except AttributeError:
+            logger.error(
+                'Los filtros deben especificarse de la siguiente forma: "property=value"')
             sys.exit()
         value = regex.group(2).strip()
         try:

@@ -53,7 +53,7 @@ def read_content_script(
 
 def read_run_description_file() -> dict:
     try:
-        file = open('run-description.yaml')
+        file = open('run-description.yml')
         schema = {
             # "$schema": "http://json-schema.org/draft-04/schema#",
             "title": "Schema for execution scripts",

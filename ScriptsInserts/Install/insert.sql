@@ -1,4 +1,4 @@
-insert into ods."tblPersona"
+insert into "tblPersona"
 values(
     %(idPersona)s, %(telefono)s
 );
