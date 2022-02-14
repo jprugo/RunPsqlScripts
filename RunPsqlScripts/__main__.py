@@ -3,6 +3,7 @@ from getopt import getopt
 import sys
 import re
 import os
+import platform
 from dotenv import load_dotenv
 # custom
 from RunPsqlScripts.RunPsqlScripts import change_schema, psycopg2, read_run_description_file, logger, ValidationError, read_content_script
@@ -149,15 +150,17 @@ def init(
             for folder in folders:
                 logger.info(f'Searching in folder {folder}')
                 try:
+                    SEPARATOR = "\\" if platform.platform() == "Windows" else "/"
+
                     scripts = list(
                         map(
                             lambda e:
-                            f'{working_directory}\\{directories_key}\\{folder}\\{e}',
+                            f'{working_directory}{SEPARATOR}{directories_key}{SEPARATOR}{folder}{SEPARATOR}{e}',
                             run[execution[0]][directories_key][folder]
                         )
                     )
                 except KeyError as e:
-                    scripts= []
+                    scripts = []
                     logger.error(
                         f"""The key {str(e)} has not been defined inside '{execution[0]}' at the level of 'run'""")
 
