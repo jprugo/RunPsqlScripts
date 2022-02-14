@@ -49,7 +49,7 @@ def read_content_script(
             execute_query(connection, query, params)
     except FileNotFoundError as e:
         logger.error(
-            'El directorio de ejecucion debe contener el archivo run-description.yaml')
+            f'The script specified in path could not be found: {e}')
         raise e
 
 
@@ -89,9 +89,9 @@ def read_run_description_file() -> dict:
         return data
     except FileNotFoundError as e:
         logger.error(
-            'El directorio de ejecucion debe contener el archivo run-description.yaml')
+            'The working directory should contain the run-description.yml file')
         raise e
     except ValidationError as e:
         logger.error(
-            'La estructura suministrada en run-description.yaml no es valida: ' + str(e))
+            'The structure supplied in run-description.yaml is not valid: ' + str(e))
         raise e

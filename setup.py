@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name='RunPsqlScripts',
-    version='0.2.8',
+    version='0.2.9',
     description='Library for python 3 that allows to execute queries for PostgreSQL according to the load definition',
     author='Juan Rueda',
     author_email='Juan.Rueda@btgpactual.com',

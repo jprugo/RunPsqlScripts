@@ -52,7 +52,6 @@ def main():
         # Mandatorio y transversal a parametros y tablas
         if opt in ['--secret']:
             secret = arg
-            print('hola: ' + arg)
             try:
                 secret = {
                     'host': re.search(r"""(["']?host["']?:)([^[,}\]]+)""", secret).group(2).strip(),
@@ -148,7 +147,7 @@ def init(
         for directories_key, directories_values in directories.items():
             folders = directories_values["childs"]
             for folder in folders:
-                print(f'Searching in folder {folder}')
+                logger.info(f'Searching in folder {folder}')
                 try:
                     scripts = list(
                         map(
@@ -184,7 +183,7 @@ def validate_filters(
             prop_name = regex.group(1).strip()
         except AttributeError:
             logger.error(
-                'Los filtros deben especificarse de la siguiente forma: "property=value"')
+                'Filters must be specified in the following way: "property=value"')
             sys.exit()
         value = regex.group(2).strip()
         try:
@@ -194,7 +193,7 @@ def validate_filters(
                 valid = False
         except KeyError as e:
             logger.error(
-                f'todos los elementos dentro de run deben contener la propiedad a filtrar {str(e)}')
+                f'All elements inside run must contain the property to filter {str(e)}')
             break
 
     return valid
