@@ -13,13 +13,13 @@ pip install RunPsqlScripts
 ## Usage
 
 ```powershell
-python -m RunPsqlScripts [-l] --secret "{host: localhost, port: 5432, database: postgres, username: postgres, password: runscripts}" --filter "sprint=21"
+python -m RunPsqlScripts [-l] --secret "{host: localhost, port: 5432, database: postgres, username: postgres, password: runscripts}" --filter "sprint=21" --param "telefono=1234567"
 ```
 
 ## Short flags
 
 ```
-    [-l] run only the last record inside run-description.yaml
+    [-l] run only the last record inside run-description.yml
 ```
 
 ## Long flags
@@ -27,40 +27,55 @@ python -m RunPsqlScripts [-l] --secret "{host: localhost, port: 5432, database: 
 ```
     [--secret] data for establish the psycopg2 connection
     [--filters] filters that select within the "run" property the values ​​that satisfy the condition
-    [--use-dotenv] read params from dot env file
-    [--args1] argument to be replaced inside sql scripts
+    [--dot-env-path] read params from dot env file
+    [--param] argument to be replaced inside sql scripts
 ```
 
 ## Requirements
 
-- You need to add a file named **run-description.yaml** in the path where you run the script to specify which of the scripts according to the given names will run. The structure of the file is as follows:
+- You need to add a file named **run-description.yml** in the path where you run the script to specify which of the scripts according to the given names will run. The structure of the file is as follows:
 
 ```yaml
 directories:
-    ScriptTables:
-        schema: ods
+    ScriptsTables:
+        schema: public #util
         childs:
             # Hosted directories where the script is executed
             - Install
             - Uninstall
-    ScriptTables2:
-        schema: ods
+    ScriptsInserts:
+        schema: public #util
         childs:
-            - *
+            # Hosted directories where the script is executed
+            - Install
+            - Uninstall
 run:
     2022-01-11 09:39:
-        # Custom property to filter
-        sprint: 21
-        lote: 10
-        ScriptTables:
-            - Script_create_table_cros_ods_creditoHistorico.sql
+        sprint: '21'
+        lote: '10'
+        # folders
+        ScriptsTables:
+            Install:
+                - install.sql
+            Uninstall:
+                - uninstall.sql
+        ScriptsInserts:
+            Install:
+                - insert.sql
+            Uninstall:
+                - uninstall.sql
     2022-01-11 10:39:
-        sprint: 21
-        lote: 10
-        ScriptTables:
-            - Script_create_table_cros_ods_creditoHistorico.sql
-        ScriptTables2:
-            - Script_create_table_cros_ods_creditoHistorico.sql
+        sprint: '22'
+        lote: '11'
+        # folders
+        # ScriptsTables:
+        #     Install:
+        #         - install.sql
+        #     Uninstall:
+        #         - uninstall.sql
+        ScriptsInserts:
+            Install:
+                - insert.sql
 ```
 
 ## Folder directory
@@ -70,16 +85,16 @@ For the previously defined yaml in the directory where it is executed, it must h
 ```bash
 └───ScriptTables
     ├───Install
-    │       create_table_test.sql
+    │       install.sql
     │
     └───Uninstall
-            delete_table_name_1.sql
-└───ScriptTables2
+            uninstall.sql
+└───ScriptInserts
     ├───Instalacion
-    │       create_table_test.sql
+    │       install.sql
     │
     └───Desinstalacion
-            delete_table_name_1.sql
+            uninstall.sql
 ```
 
 ## Contributing

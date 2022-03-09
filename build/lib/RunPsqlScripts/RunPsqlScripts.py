@@ -1,17 +1,23 @@
 # Conexión a postgres
 import psycopg2
+import psycopg2.sql as sql
+
 # Leer archivos
 import yaml
-import psycopg2.sql as sql
-# Leer el secret en formato Json
-import logging
-from termcolor import colored
 # Validation yaml
 from jsonschema import validate, ValidationError
 
-logging.basicConfig()
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+# logger
+import colorlog
+
+handler = colorlog.StreamHandler()
+
+handler.setFormatter(colorlog.ColoredFormatter(
+    '%(log_color)s%(levelname)s:%(name)s:%(message)s')
+)
+
+logger = colorlog.getLogger('example')
+logger.addHandler(handler)
 
 
 def execute_query(
@@ -20,23 +26,25 @@ def execute_query(
     try:
         cur = connection.cursor()
         cur.execute(sql, params)
-        logger.info(colored('The script was succesfully executed', 'green', attrs=['bold', 'reverse']))
+        logger.info('The script was succesfully executed')
     except psycopg2.Error as e:
-        logger.error(colored('An exception ocurred while executing script: ' + str(e), 'red'))
+        logger.error('An exception ocurred while executing script: ' + str(e))
         raise e
 
 
 def change_schema(connection, schema: str):
     try:
+        logger.info(f'Changing schema to: {schema}')
         connection.cursor().execute(
             sql.SQL("SET search_path TO {schema};").format(
                 schema=sql.Identifier(schema)
             )
         )
-        logger.info(colored(f'changed schema to: {schema}', 'blue'))
+        logger.info(f'Schema changed succesfully')
     except psycopg2.Error as e:
-        logger.error(colored('An exception ocurred changing schema: ' + str(e), 'red'))
+        logger.error('An exception ocurred changing schema: ' + str(e))
         raise e
+
 
 def read_content_script(
     connection,
@@ -45,19 +53,11 @@ def read_content_script(
     try:
         with open(file, 'r') as myfile:
             query = myfile.read()
-            logger.info(
-                colored(
-                    f'Executing script {myfile.name}',
-                    'cyan'
-                )
-            )
+            logger.info(f'Executing script {myfile.name}')
             execute_query(connection, query, params)
     except FileNotFoundError as e:
         logger.error(
-            colored(
-                f'The script specified in path could not be found: {e}', 'red'
-            )
-        )
+            f'The script specified in path could not be found: {e}')
         raise e
 
 
@@ -97,16 +97,9 @@ def read_run_description_file() -> dict:
         return data
     except FileNotFoundError as e:
         logger.error(
-            colored(
-                'The working directory should contain the run-description.yml file', 'red'
-            )    
-        )
+            'The working directory should contain the run-description.yml file')
         raise e
     except ValidationError as e:
         logger.error(
-            colored(
-                'The structure supplied in run-description.yaml is not valid: ' + str(e),
-                'red'
-            )    
-        )
+            'The structure supplied in run-description.yaml is not valid: ' + str(e))
         raise e

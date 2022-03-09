@@ -15,7 +15,6 @@ run:
     2022-01-11 09:39:
         sprint: '21'
         lote: '10'
-        creador: Laura
         # folders
         ScriptsTables:
             Install:
@@ -28,9 +27,8 @@ run:
             Uninstall:
                 - uninstall.sql
     2022-01-11 10:39:
-        sprint: '21'
+        sprint: '22'
         lote: '11'
-        creador: Laura
         # folders
         # ScriptsTables:
         #     Install:

@@ -12,7 +12,8 @@ setup(
         'psycopg2-binary',
         'python-dotenv',
         'pyaml',
-        'jsonschema'
+        'jsonschema',
+        'colorlog'
     ],
     keywords=['postgresql']
 )
