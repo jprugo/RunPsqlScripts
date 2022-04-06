@@ -1,1 +1,1 @@
-select version();
+drop table if exists "tblPersona" CASCADE;

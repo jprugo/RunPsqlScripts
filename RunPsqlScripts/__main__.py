@@ -20,7 +20,12 @@ def main():
     # Variables por defecto
     dot_env_path = None
 
+    # executio variables
     execute_last = False
+    execute_all = False
+
+    force = False
+
     params = {}
     filters = {}
 
@@ -28,7 +33,7 @@ def main():
     try:
         opts, args = getopt(
             argv,
-            shortopts='l',
+            shortopts='laf',
             longopts=[
                 "param=",
                 "secret=",
@@ -88,6 +93,10 @@ def main():
         elif opt in ['-l']:
             # sea discriminante del tipo de cargue
             execute_last = True
+        elif opt in ['-a']:
+            execute_all = True
+        elif opt in ['-f']:
+            force = True
         elif opt in ['--param']:
             regex = re.search(r"([A-Za-z0-9]+)=([A-Za-z0-9]+)", arg)
             try:
@@ -118,10 +127,12 @@ def main():
     except (FileNotFoundError, ValidationError) as e:
         sys.exit(2)
 
-    if execute_last == False:
+    if execute_last == False and execute_all == False:
         if len(filters) == 0:
             raise AttributeError(
                 'Filters are specified as follows --filter "name=value"')
+    elif execute_all == True and not force:
+        raise Exception("Please use -f to force execution of all elements inside run")
 
     try:
         CONNECTION = psycopg2.connect(**secret)
@@ -140,7 +151,8 @@ def main():
         filters=filters,
         run_description_data=run_description_data,
         params=params,
-        execute_last=execute_last
+        execute_last=execute_last,
+        execute_all= execute_all
     )
 
     logger.info(colored('The work was finished succesfully', 'green'))
@@ -163,7 +175,8 @@ def init(
     filters: dict,
     run_description_data: dict = None,
     params: dict = None,
-    execute_last: bool = False
+    execute_last: bool = False,
+    execute_all: bool = False
 ):
     directories = run_description_data['directories']
 
@@ -172,6 +185,8 @@ def init(
     if(execute_last and not bool(filters)):
         key = list(run.keys())[-1]
         executions = {key: run[key]}
+    elif (execute_all == True):
+        executions = run    
     else:
         executions = filterDict(run, filters)
         if(execute_last):
@@ -180,7 +195,7 @@ def init(
 
     for exec_key, exec_value in executions.items():
 
-        logger.info(colored('Iterating over: ' + exec_key , 'yellow'))
+        logger.info(colored('Iterating over: ' + exec_key, 'yellow'))
         for directories_key, directories_values in directories.items():
             folders = directories_values["childs"]
             for folder in folders:
@@ -204,9 +219,21 @@ def init(
                     #     )
                     # )
                 else:
+                    try:
+                        change_schema(
+                            connection=connection,
+                            schema=directories_values['schema']
+                        )
+                    except:
+                        logger.info(
+                            colored(
+                                f"""no schema specified, queries will be executed within public schema""",
+                                'yellow'
+                            )
+                        )
+
                     start_execution(
                         connection=connection,
-                        schema=directories_values['schema'],
                         script_paths=scripts,
                         params=params,
                     )
@@ -214,11 +241,9 @@ def init(
 
 def start_execution(
     connection,
-    schema: str,
     script_paths: list,
     params: dict = None,
 ):
-    change_schema(connection=connection, schema=schema)
 
     for script_path in script_paths:
         read_content_script(

@@ -17,15 +17,15 @@ run:
         lote: '10'
         # folders
         ScriptsTables:
+            Uninstall:
+                - uninstall.sql
             Install:
                 - install.sql
+        ScriptsInserts:
             Uninstall:
                 - uninstall.sql
-        ScriptsInserts:
             Install:
                 - insert.sql
-            Uninstall:
-                - uninstall.sql
     2022-01-11 10:39:
         sprint: '22'
         lote: '11'

@@ -6,11 +6,10 @@ import os
 import platform
 from dotenv import load_dotenv
 # custom
-from RunPsqlScripts.RunPsqlScripts import change_schema, psycopg2, read_run_description_file, logger, ValidationError, read_content_script
+from RunPsqlScripts.RunPsqlScripts import change_schema, psycopg2, read_run_description_file, logger, ValidationError, read_content_script, colored
 
 
 def main():
-    logger.info('Hello!')
     # Se obtienen los argumentos proporcionados en el comando
     argv = sys.argv[1:]
 
@@ -22,8 +21,8 @@ def main():
     dot_env_path = None
 
     execute_last = False
-    filters = []
     params = {}
+    filters = {}
 
     # se hace uso del modulo get opt para mandejar los argumentos pasados al script
     try:
@@ -31,14 +30,14 @@ def main():
             argv,
             shortopts='l',
             longopts=[
-                "param ",
-                "secret ",
-                "filter ",
-                "dot-env-path "
+                "param=",
+                "secret=",
+                "filter=",
+                "dot-env-path="
             ]
         )
     except Exception as e:
-        logger.info('An exception ocurred: ' + str(e))
+        logger.info(colored('An exception ocurred: ' + str(e), 'red'))
         sys.exit(2)
 
     for opt, arg in opts:
@@ -55,29 +54,62 @@ def main():
                 }
             except AttributeError as e:
                 logger.error(
-                    f'Se ha suministrado un formato incorrecto para la propiedad secret (revisar la documentacion) str({e})')
+                    colored(
+                        f'Se ha suministrado un formato incorrecto para la propiedad secret (revisar la documentacion) str({e})',
+                        'red'
+                    )
+                )
                 sys.exit()
 
         elif opt in ['--filter']:
-            filters.append(arg)
+            regex = re.search(r"([A-Za-z0-9]+)=([A-Za-z0-9]+)", arg)
+            try:
+                prop_name = regex.group(1).strip()
+                value = regex.group(2).strip()
+                # logger.info(
+                #     colored(f'filtering by: {prop_name} = {value}', 'yellow')
+                # )
+                if (prop_name in filters):
+                    logger.info(
+                        colored(f'Overwritting property to filter: {prop_name} ({filters[prop_name]} -> {value})', 'magenta'))
+                filters[prop_name] = value
+            except AttributeError:
+                logger.error(
+                    'Filters must be specified in the following way: "property=value"')
+                sys.exit()
         elif opt in ['--dot-env-path']:
             dot_env_path = arg
-            logger.info(f'Getting .env data from : {dot_env_path}')
-            load_dotenv(dotenv_path=dot_env_path)
+            logger.info(
+                colored(f'Getting .env data from : {dot_env_path}', 'yellow')
+            )
+            load_dotenv()
             params = os.environ
         # Short flags
         elif opt in ['-l']:
             # sea discriminante del tipo de cargue
             execute_last = True
         elif opt in ['--param']:
-            key = opt.replace('-', '')
-            if key in params:
-                logger.info(f"Overwriting property: '{key}'")
-            params[key] = arg
+            regex = re.search(r"([A-Za-z0-9]+)=([A-Za-z0-9]+)", arg)
+            try:
+                key = regex.group(1).strip()
+                value = regex.group(2).strip()
+                if key in params:
+                    logger.info(
+                        colored(f"Overwriting param: '{key}'", 'magenta'))
+                params[key] = value
+            except AttributeError:
+                logger.error(
+                    colored(
+                        f'Params must be specified in the following way: "param=value"',
+                        'red'
+                    )
+                )
+                sys.exit()
 
     # Si no se especifica secreto de conexion se interrumpe la ejecucion
     if secret is None:
-        logger.info("You must specify the secret in order to connect database")
+        logger.error(
+            colored("You must specify the secret in order to connect database", 'red'))
         sys.exit(2)
 
     # Se valida el schema suministrado dentro del archivo run-description.yaml
@@ -95,7 +127,9 @@ def main():
         CONNECTION = psycopg2.connect(**secret)
     except psycopg2.Error as e:
         logger.exception(
-            "An error ocurred while connecting to the database " + str(e))
+            colored(
+                "An error ocurred while connecting to the database " + str(e), 'red')
+        )
         sys.exit(2)
 
     working_directory = os.getcwd()
@@ -109,15 +143,24 @@ def main():
         execute_last=execute_last
     )
 
-    logger.info('The work was finished succesfully')
+    logger.info(colored('The work was finished succesfully', 'green'))
 
     CONNECTION.close()
+
+
+def filterDict(mainDicts, filterDict):
+    # return [x for x in mainDicts if not filterDict.items() - x[1].items()]
+    dict = {}
+    for x, y in mainDicts.items():
+        if all(k in y and y[k] == v for k, v in filterDict.items()):
+            dict[x] = y
+    return dict
 
 
 def init(
     connection,
     working_directory: str,
-    filters: list,
+    filters: dict,
     run_description_data: dict = None,
     params: dict = None,
     execute_last: bool = False
@@ -126,17 +169,18 @@ def init(
 
     run = run_description_data['run']
 
-    if(execute_last):
-        executions = [list(run.items())[-1]]
+    if(execute_last and not bool(filters)):
+        key = list(run.keys())[-1]
+        executions = {key: run[key]}
     else:
-        executions = list(
-            filter(
-                lambda x: validate_filters(filters, x) == True,
-                run.items()
-            )
-        )
+        executions = filterDict(run, filters)
+        if(execute_last):
+            key = list(executions.keys())[-1]
+            executions = {key: run[key]}
 
-    for execution in executions:
+    for exec_key, exec_value in executions.items():
+
+        logger.info(colored('Iterating over: ' + exec_key, 'yellow'))
         for directories_key, directories_values in directories.items():
             folders = directories_values["childs"]
             for folder in folders:
@@ -148,59 +192,43 @@ def init(
                         map(
                             lambda e:
                             f'{working_directory}{SEPARATOR}{directories_key}{SEPARATOR}{folder}{SEPARATOR}{e}',
-                            run[execution[0]][directories_key][folder]
+                            run[exec_key][directories_key][folder]
                         )
                     )
                 except KeyError as e:
                     scripts = []
-                    logger.error(
-                        f"""The key {str(e)} has not been defined inside '{execution[0]}' at the level of 'run'""")
+                    # logger.info(
+                    #     colored(
+                    #         f"""The key {str(e)} has not been defined inside '{exec_key}' at the level of 'run'""",
+                    #         'yellow'
+                    #     )
+                    # )
+                else:
+                    try:
+                        change_schema(
+                            connection=connection,
+                            schema=directories_values['schema']
+                        )
+                    except:
+                        logger.info(
+                            colored(
+                                f"""no schema specified, queries will be executed within public schema""",
+                                'yellow'
+                            )
+                        )
 
-                start_execution(
-                    connection=connection,
-                    schema=directories_values['schema'],
-                    script_paths=scripts,
-                    params=params,
-                )
-
-                logger.info(
-                    '_________________________________________________')
-
-
-def validate_filters(
-    filters: list,
-    execution: dict
-):
-    valid = False
-    for filter in filters:
-        regex = re.search(r"([A-Za-z0-9]+)=([A-Za-z0-9]+)", filter)
-        try:
-            prop_name = regex.group(1).strip()
-        except AttributeError:
-            logger.error(
-                'Filters must be specified in the following way: "property=value"')
-            sys.exit()
-        value = regex.group(2).strip()
-        try:
-            if execution[1][prop_name] == value:
-                valid = True
-            else:
-                valid = False
-        except KeyError as e:
-            logger.error(
-                f'All elements inside run must contain the property to filter {str(e)}')
-            break
-
-    return valid
+                    start_execution(
+                        connection=connection,
+                        script_paths=scripts,
+                        params=params,
+                    )
 
 
 def start_execution(
     connection,
-    schema: str,
     script_paths: list,
     params: dict = None,
 ):
-    change_schema(connection=connection, schema=schema)
 
     for script_path in script_paths:
         read_content_script(
